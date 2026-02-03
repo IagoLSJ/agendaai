@@ -1,17 +1,70 @@
 import { getCurrentUser } from '@/services/users'
 import { getAppointmentsByUser } from '@/services/appointments'
+import { getServicesByUser } from '@/services/services'
 import { formatDate, formatTime } from '@/lib/utils/scheduling'
 import { redirect } from 'next/navigation'
 import AppointmentActions from '@/components/AppointmentActions'
+import AppointmentFilters from '@/components/AppointmentFilters'
+import ManualBookingButton from '@/components/ManualBookingButton'
 
-export default async function AppointmentsPage() {
+export default async function AppointmentsPage({
+  searchParams,
+}: {
+  searchParams: { filter?: string; date?: string }
+}) {
   const user = await getCurrentUser()
 
   if (!user) {
     redirect('/login')
   }
 
-  const appointments = await getAppointmentsByUser(user.id)
+  // Calculate filters
+  const filter = searchParams.filter || 'upcoming'
+  let startDate: string | undefined
+  let endDate: string | undefined
+
+  const today = new Date()
+  const todayStr = today.toISOString().split('T')[0]
+
+  switch (filter) {
+    case 'today':
+      startDate = todayStr
+      endDate = todayStr
+      break
+    case 'week': {
+      const start = new Date(today)
+      start.setDate(today.getDate() - today.getDay()) // Sunday
+      const end = new Date(start)
+      end.setDate(start.getDate() + 6) // Saturday
+      startDate = start.toISOString().split('T')[0]
+      endDate = end.toISOString().split('T')[0]
+      break
+    }
+    case 'month': {
+      const start = new Date(today.getFullYear(), today.getMonth(), 1)
+      const end = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+      startDate = start.toISOString().split('T')[0]
+      endDate = end.toISOString().split('T')[0]
+      break
+    }
+    case 'specific':
+      if (searchParams.date) {
+        startDate = searchParams.date
+        endDate = searchParams.date
+      }
+      break
+    case 'upcoming':
+    default:
+      startDate = todayStr
+      endDate = undefined // All future
+      break
+  }
+
+  /* 1. Fetch appointments */
+  const appointments = await getAppointmentsByUser(user.id, { startDate, endDate })
+
+  /* 2. Fetch services for the manual booking modal */
+  const services = await getServicesByUser(user.id)
 
   return (
     <div className="w-full min-h-screen bg-gray-50/50">
@@ -26,11 +79,10 @@ export default async function AppointmentsPage() {
               Gerencie e acompanhe seus horários marcados
             </p>
           </div>
-          <button className="btn btn-primary w-full sm:w-auto shadow-xl shadow-primary-500/20 text-sm sm:text-base">
-            <span className="sm:hidden">Novo Agendamento</span>
-            <span className="hidden sm:inline">+ Novo Agendamento</span>
-          </button>
+          <ManualBookingButton services={services} userId={user.id} />
         </div>
+
+        <AppointmentFilters />
 
         {/* Empty State */}
         {appointments.length === 0 ? (

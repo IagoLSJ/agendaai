@@ -4,6 +4,7 @@ import { BusinessHour, DAYS_OF_WEEK } from '@/types'
 import { upsertBusinessHours, deleteBusinessHour } from '@/services/business-hours-client'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import { useToast } from '@/components/providers/ToastProvider'
 
 interface DayHours {
   day_of_week: number
@@ -21,6 +22,7 @@ export default function BusinessHoursForm({
   existingHours: BusinessHour[]
 }) {
   const router = useRouter()
+  const { success, error } = useToast()
   const [loading, setLoading] = useState(false)
   const [hours, setHours] = useState<DayHours[]>([])
   const [successMessage, setSuccessMessage] = useState(false)
@@ -84,9 +86,10 @@ export default function BusinessHoursForm({
 
       router.refresh()
       setSuccessMessage(true)
+      success('Horário de funcionamento atualizado!')
       setTimeout(() => setSuccessMessage(false), 3000)
-    } catch (error) {
-      alert('Falha ao atualizar o horário de funcionamento')
+    } catch (err) {
+      error('Falha ao atualizar o horário de funcionamento')
     } finally {
       setLoading(false)
     }
@@ -128,7 +131,7 @@ export default function BusinessHoursForm({
             </svg>
             Ativar Todos
           </button>
-          
+
           <button
             type="button"
             onClick={disableAllDays}
@@ -140,7 +143,7 @@ export default function BusinessHoursForm({
             </svg>
             Desativar Todos
           </button>
-          
+
           <button
             type="button"
             onClick={setBusinessHours}
@@ -167,8 +170,8 @@ export default function BusinessHoursForm({
               key={dayHour.day_of_week}
               className={`
                 rounded-xl border-2 transition-all duration-200
-                ${dayHour.enabled 
-                  ? 'bg-white border-primary-200 shadow-sm' 
+                ${dayHour.enabled
+                  ? 'bg-white border-primary-200 shadow-sm'
                   : 'bg-gray-50 border-gray-200'
                 }
               `}

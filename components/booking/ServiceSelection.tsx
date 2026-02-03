@@ -27,6 +27,7 @@ export default function ServiceSelection({
                 </h3>
                 <p className="text-sm text-gray-600">
                   {service.duration} minutos
+                  • {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(service.price || 0)}
                 </p>
               </div>
               <svg

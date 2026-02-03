@@ -4,11 +4,15 @@ import { createService } from '@/services/services-client'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
+import { useToast } from '@/components/providers/ToastProvider'
+
 export default function ServiceForm({ userId }: { userId: string }) {
   const router = useRouter()
+  const { success, error } = useToast()
   const [loading, setLoading] = useState(false)
   const [name, setName] = useState('')
   const [duration, setDuration] = useState('30')
+  const [price, setPrice] = useState('0')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -18,14 +22,18 @@ export default function ServiceForm({ userId }: { userId: string }) {
       await createService({
         name,
         duration: parseInt(duration),
+        price: isNaN(parseFloat(price.replace(',', '.'))) ? 0 : parseFloat(price.replace(',', '.')),
         user_id: userId,
       })
 
       setName('')
       setDuration('30')
+      setPrice('0')
+      success('Serviço criado com sucesso!')
       router.refresh()
-    } catch (error) {
-      alert('Falha ao criar serviço')
+    } catch (err) {
+      console.error('Error creating service:', err)
+      error('Falha ao criar serviço. Tente novamente.')
     } finally {
       setLoading(false)
     }
@@ -41,6 +49,20 @@ export default function ServiceForm({ userId }: { userId: string }) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="ex: Corte de cabelo, Massagem"
+          required
+        />
+      </div>
+
+      <div className="mb-5">
+        <label className="label">Preço (R$)</label>
+        <input
+          type="number"
+          step="0.01"
+          min="0"
+          className="input"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+          placeholder="0,00"
           required
         />
       </div>

@@ -8,6 +8,7 @@ export async function getServicesByUser(userId: string) {
     .from('services')
     .select('*')
     .eq('user_id', userId)
+    .eq('active', true)
     .order('name', { ascending: true })
 
   if (error) throw error
@@ -30,6 +31,7 @@ export async function getServicesBySlug(slug: string) {
     .from('services')
     .select('*')
     .eq('user_id', (user as any).id)
+    .eq('active', true)
     .order('name', { ascending: true })
 
   if (error) throw error

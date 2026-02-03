@@ -6,10 +6,13 @@ import {
   getDayOfWeek,
 } from '@/lib/utils/scheduling'
 
-export async function getAppointmentsByUser(userId: string) {
+export async function getAppointmentsByUser(
+  userId: string,
+  filters?: { startDate?: string; endDate?: string }
+) {
   const supabase = await createClient()
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('appointments')
     .select(
       `
@@ -21,7 +24,22 @@ export async function getAppointmentsByUser(userId: string) {
     `
     )
     .eq('user_id', userId)
-    .gte('date', new Date().toISOString().split('T')[0])
+    .neq('status', 'cancelled')
+    .neq('status', 'completed')
+
+  // Apply filters or default to upcoming
+  if (filters?.startDate) {
+    query = query.gte('date', filters.startDate)
+  } else {
+    // Default: Show upcoming appointments from today
+    query = query.gte('date', new Date().toISOString().split('T')[0])
+  }
+
+  if (filters?.endDate) {
+    query = query.lte('date', filters.endDate)
+  }
+
+  const { data, error } = await query
     .order('date', { ascending: true })
     .order('start_time', { ascending: true })
 

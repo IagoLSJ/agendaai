@@ -40,6 +40,8 @@ export interface Database {
           id: string
           name: string
           duration: number
+          price: number
+          active: boolean
           user_id: string
           created_at: string
           updated_at: string
@@ -48,6 +50,8 @@ export interface Database {
           id?: string
           name: string
           duration: number
+          price: number
+          active?: boolean
           user_id: string
           created_at?: string
           updated_at?: string
@@ -56,6 +60,8 @@ export interface Database {
           id?: string
           name?: string
           duration?: number
+          price?: number
+          active?: boolean
           user_id?: string
           created_at?: string
           updated_at?: string

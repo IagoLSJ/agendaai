@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   description: 'Marque seus agendamentos com facilidade',
 }
 
+import { ToastProvider } from '@/components/providers/ToastProvider'
+
 export default function RootLayout({
   children,
 }: {
@@ -20,7 +22,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body className={`${inter.variable} font-sans antialiased text-secondary-900 bg-secondary-50`}>{children}</body>
+      <body className={`${inter.variable} font-sans antialiased text-secondary-900 bg-secondary-50`}>
+        <ToastProvider>{children}</ToastProvider>
+      </body>
     </html>
   )
 }

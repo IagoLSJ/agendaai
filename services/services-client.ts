@@ -33,7 +33,45 @@ export async function updateService(id: string, data: Partial<ServiceInsert>) {
 export async function deleteService(id: string) {
     const supabase = createClient()
 
-    const { error } = await supabase.from('services').delete().eq('id', id)
+    // Check for future/active appointments
+    const today = new Date().toISOString().split('T')[0]
+    const { data: activeAppointments, error: checkError } = await supabase
+        .from('appointments')
+        .select('id')
+        .eq('service_id', id)
+        .eq('status', 'confirmed')
+        .gte('date', today)
 
-    if (error) throw error
+    if (checkError) throw checkError
+
+    if (activeAppointments && activeAppointments.length > 0) {
+        throw new Error('PENDING_APPOINTMENTS')
+    }
+
+    // Check if there are ANY appointments (history)
+    const { count, error: countError } = await supabase
+        .from('appointments')
+        .select('*', { count: 'exact', head: true })
+        .eq('service_id', id)
+
+    if (countError) throw countError
+
+    if (count && count > 0) {
+        // Soft delete (archive)
+        const { error: updateError } = await supabase
+            .from('services')
+            // @ts-expect-error - Supabase type inference bug
+            .update({ active: false } as any)
+            .eq('id', id)
+
+        if (updateError) throw updateError
+    } else {
+        // Hard delete
+        const { error: deleteError } = await supabase
+            .from('services')
+            .delete()
+            .eq('id', id)
+
+        if (deleteError) throw deleteError
+    }
 }

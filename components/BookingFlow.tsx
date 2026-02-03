@@ -4,11 +4,11 @@ import { Service, BookingFormData } from '@/types'
 import { useState } from 'react'
 import ServiceSelection from './booking/ServiceSelection'
 import DateSelection from './booking/DateSelection'
-import TimeSelection from './booking/TimeSelection'
+import DateTimeSelection from './booking/DateTimeSelection'
 import ClientInfoForm from './booking/ClientInfoForm'
 import ConfirmationScreen from './booking/ConfirmationScreen'
 
-type Step = 'service' | 'date' | 'time' | 'info' | 'confirmed'
+type Step = 'service' | 'datetime' | 'info' | 'confirmed'
 
 export default function BookingFlow({
   services,
@@ -27,16 +27,11 @@ export default function BookingFlow({
 
   const handleServiceSelect = (serviceId: string) => {
     setBookingData({ ...bookingData, serviceId })
-    setStep('date')
+    setStep('datetime')
   }
 
-  const handleDateSelect = (date: string) => {
-    setBookingData({ ...bookingData, date })
-    setStep('time')
-  }
-
-  const handleTimeSelect = (startTime: string) => {
-    setBookingData({ ...bookingData, startTime })
+  const handleDateTimeSelect = (date: string, startTime: string) => {
+    setBookingData({ ...bookingData, date, startTime })
     setStep('info')
   }
 
@@ -61,50 +56,42 @@ export default function BookingFlow({
       {step !== 'confirmed' && (
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
-            {['service', 'date', 'time', 'info'].map((s, index) => (
+            {['service', 'datetime', 'info'].map((s, index) => (
               <div
                 key={s}
                 className={`flex-1 ${index > 0 ? 'ml-2' : ''}`}
               >
                 <div
-                  className={`h-2 rounded-full ${['service', 'date', 'time', 'info'].indexOf(step) >= index
-                      ? 'bg-primary-600'
-                      : 'bg-gray-200'
+                  className={`h-2 rounded-full ${['service', 'datetime', 'info'].indexOf(step) >= index
+                    ? 'bg-primary-600'
+                    : 'bg-gray-200'
                     }`}
                 />
               </div>
             ))}
           </div>
           <div className="text-sm text-gray-600 text-center">
-            Passo {['service', 'date', 'time', 'info'].indexOf(step) + 1} de 4
+            Passo {['service', 'datetime', 'info'].indexOf(step) + 1} de 3
           </div>
         </div>
       )}
 
-      {/* Steps */}
+      {/* Step 1: Service Selection */}
       {step === 'service' && (
         <ServiceSelection services={services} onSelect={handleServiceSelect} />
       )}
 
-      {step === 'date' && selectedService && (
-        <DateSelection
+      {/* Step 2: Date & Time Selection (Combined) */}
+      {step === 'datetime' && selectedService && (
+        <DateTimeSelection
           service={selectedService}
           userId={userId}
-          onSelect={handleDateSelect}
+          onSelect={handleDateTimeSelect}
           onBack={() => setStep('service')}
         />
       )}
 
-      {step === 'time' && selectedService && bookingData.date && (
-        <TimeSelection
-          service={selectedService}
-          userId={userId}
-          date={bookingData.date}
-          onSelect={handleTimeSelect}
-          onBack={() => setStep('date')}
-        />
-      )}
-
+      {/* Step 3: Client Info */}
       {step === 'info' && selectedService && bookingData.date && bookingData.startTime && (
         <ClientInfoForm
           service={selectedService}
@@ -113,10 +100,11 @@ export default function BookingFlow({
           startTime={bookingData.startTime}
           onSubmit={handleClientInfo}
           onConfirmed={handleConfirmed}
-          onBack={() => setStep('time')}
+          onBack={() => setStep('datetime')}
         />
       )}
 
+      {/* Step 4: Confirmation */}
       {step === 'confirmed' && (
         <ConfirmationScreen
           businessName={businessName}
